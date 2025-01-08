@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compartilhe sua Localização</title>
+    <style>
+        /* Estilo moderno e responsivo */
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        #container {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .coordinates {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        .copy-button, .whatsapp-button {
+            margin-top: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        .copy-button:hover, .whatsapp-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Compartilhe sua Localização</h1>
+        <button id="share-location">Obter Localização</button>
+        <div id="coordinates-container" style="display: none;">
+            <div class="coordinates" id="coordinates">Coordenadas: </div>
+            <button class="copy-button" onclick="copyToClipboard()">Copiar Coordenadas</button>
+            <button class="whatsapp-button" onclick="shareOnWhatsApp()">Compartilhar no WhatsApp</button>
+        </div>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        let coordinatesText = ""; // Variável global para armazenar as coordenadas
+
+        // Extrai parâmetros da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const phoneNumber = urlParams.get("phone") || "+9999999999999"; // Número padrão, caso o parâmetro não seja passado
+        const customMessage = urlParams.get("message") || "Olá! Minhas coordenadas são:"; // Mensagem padrão
+
+        // Lida com o botão para obter localização
+        document.getElementById("share-location").addEventListener("click", () => {
+            const status = document.getElementById("status");
+            const container = document.getElementById("coordinates-container");
+            const coordinatesElement = document.getElementById("coordinates");
+
+            if (navigator.geolocation) {
+                status.innerText = "Obtendo sua localização...";
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+
+                        // Formata as coordenadas
+                        coordinatesText = `${latitude}, ${longitude}`;
+
+                        // Atualiza os valores na página
+                        coordinatesElement.innerText = `Coordenadas: ${coordinatesText}`;
+                        container.style.display = "block";
+                        status.innerText = "Localização obtida com sucesso!";
+                    },
+                    (error) => {
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                status.innerText = "Permissão negada para acessar localização.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                status.innerText = "Informações de localização indisponíveis.";
+                                break;
+                            case error.TIMEOUT:
+                                status.innerText = "Tempo para acessar localização expirou.";
+                                break;
+                            default:
+                                status.innerText = "Erro desconhecido ao acessar localização.";
+                        }
+                    }
+                );
+            } else {
+                status.innerText = "Geolocalização não é suportada neste navegador.";
+            }
+        });
+
+        // Função para copiar as coordenadas para a área de transferência
+        function copyToClipboard() {
+            if (coordinatesText) {
+                navigator.clipboard.writeText(coordinatesText)
+                    .then(() => {
+                        alert(`Coordenadas copiadas: ${coordinatesText}`);
+                    })
+                    .catch(() => {
+                        alert("Erro ao copiar para a área de transferência.");
+                    });
+            } else {
+                alert("Nenhuma coordenada disponível para copiar.");
+            }
+        }
+
+        // Função para compartilhar as coordenadas no WhatsApp
+        function shareOnWhatsApp() {
+            if (coordinatesText) {
+                const message = `${customMessage} ${coordinatesText}`;
+                const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappURL, "_blank");
+            } else {
+                alert("Nenhuma coordenada disponível para compartilhar.");
+            }
+        }
+    </script>
+</body>
+</html>
